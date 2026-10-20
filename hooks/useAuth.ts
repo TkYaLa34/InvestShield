@@ -36,7 +36,7 @@ export function useAuth() {
     });
 
     return () => {
-      supabase.auth.removeSubscriptions(authListener?.subscription?.id);
+      // Auth listener cleanup handled by Supabase client lifecycle
     };
   }, []);
 

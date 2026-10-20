@@ -3,7 +3,7 @@
 
 export type AssetType = "stock" | "etf";
 
-export type MarketDataProvider = "finnhub" | "eodhd" | "alpha_vantage" | "sec_edgar";
+export type MarketDataProvider = "finnhub" | "eodhd" | "alpha_vantage" | "sec_edgar" | "fmp";
 
 /**
  * Real-time quote data for a symbol

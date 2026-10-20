@@ -1,5 +1,5 @@
 export type AssetType = "stock" | "etf";
-export type ProviderName = "eodhd" | "alpha_vantage" | "sec_edgar";
+export type ProviderName = "eodhd" | "alpha_vantage" | "sec_edgar" | "fmp";
 
 export interface Quote {
   symbol: string;

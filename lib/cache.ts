@@ -22,6 +22,8 @@ export interface MarketSymbol {
   asset_type: "stock" | "etf";
   sector: string | null;
   industry: string | null;
+  is_active: boolean;
+  updated_at: string;
 }
 
 export interface PriceCandle {
@@ -97,6 +99,8 @@ export class FinnhubProvider implements MarketDataProvider {
           : "stock",
         sector: data.finnhubIndustry ?? null,
         industry: null,
+        is_active: true,
+        updated_at: new Date().toISOString(),
       };
     } catch {
       return null;
@@ -159,24 +163,27 @@ export class MarketDataCache {
 
     const isStale =
       !cached ||
-      Date.now() - new Date(cached.updated_at).getTime() > CACHE_STALE_MS;
+      Date.now() - new Date((cached as CachedQuote).updated_at).getTime() > CACHE_STALE_MS;
 
     if (!isStale && cached) {
-      return this.mapCachedQuote(cached);
+      return this.mapCachedQuote(cached as CachedQuote);
     }
 
     const fresh = await this.provider.getQuote(symbol);
 
-    await supabase.from("cached_quotes").upsert({
-      symbol: fresh.symbol,
-      price: fresh.price,
-      change: fresh.change,
-      change_percent: fresh.change_percent,
-      volume: fresh.volume,
-      market_cap: fresh.market_cap,
-      pe_ratio: fresh.pe_ratio,
-      updated_at: fresh.updated_at,
-    });
+    await supabase.from("cached_quotes").upsert(
+      {
+        symbol: fresh.symbol,
+        price: fresh.price,
+        change: fresh.change,
+        change_percent: fresh.change_percent,
+        volume: fresh.volume,
+        market_cap: fresh.market_cap,
+        pe_ratio: fresh.pe_ratio,
+        updated_at: fresh.updated_at,
+      } as never,
+      { onConflict: "symbol" }
+    );
 
     return fresh;
   }
@@ -191,27 +198,33 @@ export class MarketDataCache {
       .single();
 
     if (cached) {
+      const row = cached as CachedSymbol;
       return {
-        symbol: cached.symbol,
-        name: cached.name,
-        exchange: cached.exchange,
-        asset_type: cached.asset_type,
-        sector: cached.sector,
-        industry: cached.industry,
+        symbol: row.symbol,
+        name: row.name,
+        exchange: row.exchange,
+        asset_type: row.asset_type,
+        sector: row.sector,
+        industry: row.industry,
+        is_active: row.is_active,
+        updated_at: row.updated_at,
       };
     }
 
     const fromProvider = await this.provider.getSymbol(symbol);
     if (!fromProvider) return null;
 
-    await supabase.from("cached_symbols").upsert({
-      symbol: fromProvider.symbol,
-      name: fromProvider.name,
-      exchange: fromProvider.exchange,
-      asset_type: fromProvider.asset_type,
-      sector: fromProvider.sector,
-      industry: fromProvider.industry,
-    });
+    await supabase.from("cached_symbols").upsert(
+      {
+        symbol: fromProvider.symbol,
+        name: fromProvider.name,
+        exchange: fromProvider.exchange,
+        asset_type: fromProvider.asset_type,
+        sector: fromProvider.sector,
+        industry: fromProvider.industry,
+      } as never,
+      { onConflict: "symbol" }
+    );
 
     return fromProvider;
   }

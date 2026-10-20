@@ -30,15 +30,16 @@ export function useMarketData(symbol: string) {
         .single();
 
       if (cached) {
+        const row = cached as { symbol: string; price: number; change: number; change_percent: number; volume: number; market_cap: number | null; pe_ratio: number | null; updated_at: string };
         setQuote({
-          symbol: cached.symbol,
-          price: cached.price,
-          change: cached.change,
-          changePercent: cached.change_percent,
-          volume: cached.volume,
-          marketCap: cached.market_cap,
-          peRatio: cached.pe_ratio,
-          updatedAt: cached.updated_at,
+          symbol: row.symbol,
+          price: row.price,
+          change: row.change,
+          changePercent: row.change_percent,
+          volume: row.volume,
+          marketCap: row.market_cap,
+          peRatio: row.pe_ratio,
+          updatedAt: row.updated_at,
         });
         setLoading(false);
         return;

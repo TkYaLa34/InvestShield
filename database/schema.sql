@@ -243,6 +243,82 @@ create policy "Service role can manage cached symbols"
   on public.cached_symbols for all
   using (auth.role() = 'service_role');
 
+-- cached_sec_filings table (SEC EDGAR 10-K, 10-Q, 8-K)
+create table if not exists public.cached_sec_filings (
+  symbol text not null,
+  type text not null,
+  title text not null,
+  date text not null,
+  url text not null,
+  updated_at timestamptz default now(),
+  primary key (symbol, type)
+);
+
+-- RLS Policies: Cached SEC Filings (read-only for authenticated users)
+alter table if exists public.cached_sec_filings enable row level security;
+
+create policy "Authenticated users can view cached sec filings"
+  on public.cached_sec_filings for select
+  using (auth.role() = 'authenticated');
+
+create policy "Service role can manage cached sec filings"
+  on public.cached_sec_filings for all
+  using (auth.role() = 'service_role');
+
+create trigger update_cached_sec_filings_updated_at
+  before update on public.cached_sec_filings
+  for each row
+  execute function public.update_updated_at_column();
+
+-- cached_financial_metrics table (FMP Financial Ratios & Key Metrics)
+create table if not exists public.cached_financial_metrics (
+  symbol text primary key,
+  -- Valuation
+  pe_ratio numeric,
+  pb_ratio numeric,
+  ps_ratio numeric,
+  peg_ratio numeric,
+  ev_to_ebitda numeric,
+  -- Profitability
+  profit_margin numeric,
+  operating_margin numeric,
+  roe numeric,
+  roa numeric,
+  roic numeric,
+  -- Growth
+  revenue_growth numeric,
+  earnings_growth numeric,
+  eps_growth numeric,
+  -- Financial Health
+  current_ratio numeric,
+  quick_ratio numeric,
+  debt_to_equity numeric,
+  -- Dividend
+  dividend_yield numeric,
+  payout_ratio numeric,
+  -- Market
+  beta numeric,
+  shares_outstanding numeric,
+  float_shares numeric,
+  updated_at timestamptz default now()
+);
+
+-- RLS Policies: Cached Financial Metrics (read-only for authenticated users)
+alter table if exists public.cached_financial_metrics enable row level security;
+
+create policy "Authenticated users can view cached financial metrics"
+  on public.cached_financial_metrics for select
+  using (auth.role() = 'authenticated');
+
+create policy "Service role can manage cached financial metrics"
+  on public.cached_financial_metrics for all
+  using (auth.role() = 'service_role');
+
+create trigger update_cached_financial_metrics_updated_at
+  before update on public.cached_financial_metrics
+  for each row
+  execute function public.update_updated_at_column();
+
 -- Updated at triggers
 create or replace function public.update_updated_at_column()
 returns trigger as $$
